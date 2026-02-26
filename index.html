@@ -458,7 +458,7 @@
         })();
 
         /* ══════════════════════════════════════════════
-           WHEEL DRAWING
+           WHEEL DRAWING & STATE
         ══════════════════════════════════════════════ */
         var wCanvas = document.getElementById('wheelCanvas');
         var wCtx = wCanvas.getContext('2d');
@@ -468,6 +468,25 @@
         var HUB_R = 52;   // center hub radius
 
         var currentAngle = 0;
+        var spinning = false;
+
+        // --- Daily limit logic ---
+        function getTodayString() {
+            var d = new Date();
+            return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+        }
+
+        var lastSpunDate = localStorage.getItem('lucky_wheel_last_spun_date');
+        var today = getTodayString();
+        var hasSpunToday = (lastSpunDate === today);
+
+        if (hasSpunToday) {
+            var spinBtnLocal = document.getElementById('spinBtn');
+            if (spinBtnLocal) {
+                spinBtnLocal.disabled = true;
+                spinBtnLocal.textContent = 'Come Back Tomorrow';
+            }
+        }
 
         function hexToRgb(hex) {
             var n = parseInt(hex.replace('#', ''), 16);
@@ -558,17 +577,20 @@
             /* gold ring */
             wCtx.beginPath();
             wCtx.arc(CX, CY, HUB_R, 0, TAU);
-            wCtx.strokeStyle = spinning ? '#aaa' : '#f5c842';
+            wCtx.strokeStyle = (spinning || hasSpunToday) ? '#aaa' : '#f5c842';
             wCtx.lineWidth = 3.5;
             wCtx.stroke();
 
             /* SPIN label */
             wCtx.font = 'bold 13px Outfit, Arial, sans-serif';
             wCtx.textAlign = 'center';
-            wCtx.fillStyle = spinning ? '#666' : '#1a1a1a';
+            wCtx.fillStyle = (spinning || hasSpunToday) ? '#666' : '#1a1a1a';
             wCtx.shadowColor = 'rgba(255,255,255,0.3)';
             wCtx.shadowBlur = 3;
-            wCtx.fillText(spinning ? 'GOING!' : 'SPIN', CX, CY + 5);
+            var centerText = 'SPIN';
+            if (spinning) centerText = 'GOING!';
+            else if (hasSpunToday) centerText = 'DONE';
+            wCtx.fillText(centerText, CX, CY + 5);
             wCtx.shadowBlur = 0;
         }
 
@@ -590,10 +612,9 @@
         /* ══════════════════════════════════════════════
            SPIN LOGIC
         ══════════════════════════════════════════════ */
-        var spinning = false;
 
         function doSpin() {
-            if (spinning) return;
+            if (spinning || hasSpunToday) return;
             spinning = true;
 
             document.getElementById('spinBtn').disabled = true;
@@ -645,10 +666,14 @@
 
             spawnConfetti(seg.color);
 
+            localStorage.setItem('lucky_wheel_last_spun_date', getTodayString());
+            hasSpunToday = true;
+
             setTimeout(function () {
-                document.getElementById('spinBtn').disabled = false;
+                var btn = document.getElementById('spinBtn');
+                btn.textContent = 'Come Back Tomorrow';
                 spinning = false;
-                drawWheel(currentAngle); /* redraw hub to show SPIN again */
+                drawWheel(currentAngle); /* redraw hub to show DONE */
             }, 900);
         }
 
