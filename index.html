@@ -470,21 +470,13 @@
         var currentAngle = 0;
         var spinning = false;
 
-        // --- Daily limit logic ---
-        function getTodayString() {
-            var d = new Date();
-            return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
-        }
+        var hasSpun = localStorage.getItem('lucky_wheel_has_spun') === 'true';
 
-        var lastSpunDate = localStorage.getItem('lucky_wheel_last_spun_date');
-        var today = getTodayString();
-        var hasSpunToday = (lastSpunDate === today);
-
-        if (hasSpunToday) {
+        if (hasSpun) {
             var spinBtnLocal = document.getElementById('spinBtn');
             if (spinBtnLocal) {
                 spinBtnLocal.disabled = true;
-                spinBtnLocal.textContent = 'Come Back Tomorrow';
+                spinBtnLocal.textContent = 'Already Spun';
             }
         }
 
@@ -577,19 +569,19 @@
             /* gold ring */
             wCtx.beginPath();
             wCtx.arc(CX, CY, HUB_R, 0, TAU);
-            wCtx.strokeStyle = (spinning || hasSpunToday) ? '#aaa' : '#f5c842';
+            wCtx.strokeStyle = (spinning || hasSpun) ? '#aaa' : '#f5c842';
             wCtx.lineWidth = 3.5;
             wCtx.stroke();
 
             /* SPIN label */
             wCtx.font = 'bold 13px Outfit, Arial, sans-serif';
             wCtx.textAlign = 'center';
-            wCtx.fillStyle = (spinning || hasSpunToday) ? '#666' : '#1a1a1a';
+            wCtx.fillStyle = (spinning || hasSpun) ? '#666' : '#1a1a1a';
             wCtx.shadowColor = 'rgba(255,255,255,0.3)';
             wCtx.shadowBlur = 3;
             var centerText = 'SPIN';
             if (spinning) centerText = 'GOING!';
-            else if (hasSpunToday) centerText = 'DONE';
+            else if (hasSpun) centerText = 'DONE';
             wCtx.fillText(centerText, CX, CY + 5);
             wCtx.shadowBlur = 0;
         }
@@ -614,7 +606,7 @@
         ══════════════════════════════════════════════ */
 
         function doSpin() {
-            if (spinning || hasSpunToday) return;
+            if (spinning || hasSpun) return;
             spinning = true;
 
             document.getElementById('spinBtn').disabled = true;
@@ -666,12 +658,12 @@
 
             spawnConfetti(seg.color);
 
-            localStorage.setItem('lucky_wheel_last_spun_date', getTodayString());
-            hasSpunToday = true;
+            localStorage.setItem('lucky_wheel_has_spun', 'true');
+            hasSpun = true;
 
             setTimeout(function () {
                 var btn = document.getElementById('spinBtn');
-                btn.textContent = 'Come Back Tomorrow';
+                btn.textContent = 'Already Spun';
                 spinning = false;
                 drawWheel(currentAngle); /* redraw hub to show DONE */
             }, 900);
